@@ -3,23 +3,34 @@
             [bg-to-briljant.arguments     :refer [validate-args]])
   (:gen-class))
 
-(defn load-files
-  [files]
-  (for [file files]
-    (dc/load-workbook file)))
+(def debetkonto 1933)
+(def headers    "PREL\n1;.U\n")
+(def projekt    2019)
 
-(defn get-date
-  [document]
-  (->> (dc/select-sheet "Insättningsuppgift via internet" document)
-       (dc/select-cell "A5" )
+(defn dokument->datum
+  [dokument]
+  (->> dokument
+       (dc/select-sheet "Insättningsuppgift via internet")
+       (dc/select-cell "A5")
        dc/read-cell))
+
+(defn dokument->total
+  [dokument]
+  (->> dokument
+       (dc/select-sheet "Insättningsuppgift via internet")
+       (dc/select-cell "B15")
+       dc/read-cell))
+
+(defn total-csv-rad
+  [datum totalbelopp]
+  (str ";" datum ";" debetkonto ";;;;;;" totalbelopp ";BG-inbet. " datum ";;"))
 
 (def kategori->kreditkonto
   {:sittningspaket  3168
    :spexpay         3152
    :faktura         1510
    :sittning-extern 3169
-   :okategoriserat  0})
+   :okategoriserat  0}) ; Vi sätter noll här för det bör ersättas. Kan vara fel val.
 
 (defn associera-kreditkonto
   [transaktion]
@@ -41,8 +52,23 @@
            #"80\d\d\d"            :faktura
            #"(?i)(sits|sittning)" :sittning-extern
            #""                    :okategoriserat)))
+(def kategori->avdelning
+  {:sittningspaket  201
+   :spexpay         501
+   :faktura         ""   ; Fakturor har ingen avdelning.
+   :sittning-extern 201
+   :okategoriserat  0})
 
-(->> document
+(defn associera-avdelning
+  [transaktion]
+  (assoc transaktion :avdelning (kategori->avdelning (:kategori transaktion))))
+
+(defn dokument->transaktioner
+  "Extraherar alla transaktioner ur ett excelark från
+  bankgirocentralen. Härleder även en mängd information för var
+  transaktion baserat på transaktionens meddelande."
+  [dokument]
+  (->> dokument
      (dc/select-sheet "Insättningsuppgift via internet")
      (dc/select-columns {:A :avsändare
                          :C :betalningsreferens
@@ -52,7 +78,14 @@
      (map kategorisera)
      (map associera-kreditkonto)
      (map associera-kreditunderkonto)
-     )
+     (map associera-avdelning)))
+
+(defn transaktion->csv-string
+  "Tar ett datum och en transaktion och returnerar en bit text i
+  CSV-format som representerar transaktionen i Briljant-format."
+  [datum {:keys [kreditkonto kreditunderkonto avdelning belopp betalningsreferens]}]
+  (str ";" datum ";" kreditkonto ";" kreditunderkonto ";" avdelning ";;" projekt ";;"
+       (- belopp) ";" betalningsreferens ";;"))
 
 
 (defn -main
@@ -61,5 +94,14 @@
     (if exit-message
       (do (println exit-message)
           (System/exit (if ok? 0 1)))
-      (for [document (load-files arguments)]
-        nil))))
+      (for [dokument (map dc/load-workbook arguments)]
+        (let [datum (dokument->datum dokument)]
+          (spit (str "out/" datum ".csv")
+                (str headers
+                     (total-csv-rad datum (dokument->total dokument))
+                     "\n"
+                     (->> dokument
+                          dokument->transaktioner
+                          (map (partial transaktion->csv-string datum))
+                          (clojure.string/join "\n"))
+                     "\n")))))))

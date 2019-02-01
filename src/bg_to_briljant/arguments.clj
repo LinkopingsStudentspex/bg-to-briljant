@@ -10,9 +10,9 @@
   or a map indicating the action the program should take and the
   options provided."
   [args]
-  (let [{:keys [options arguments errors summary]} (cli/parse-opts args )]
+  (let [{:keys [options arguments errors summary]} (cli/parse-opts args cli-options)]
     (cond
-      (:help options)   {:exit-message summary :ok? true}
-      errors            {:exit-message errors}
-      (empty arguments) {:exit-message "Missing input file argument."}
-      :else             {:options options :arguments arguments})))
+      (:help options)    {:exit-message summary :ok? true}
+      errors             {:exit-message errors}
+      (empty? arguments) {:exit-message "Missing input file argument."}
+      :else              {:options options :arguments arguments})))
