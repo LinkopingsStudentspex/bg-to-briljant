@@ -1,6 +1,7 @@
 (ns bg-to-briljant.core
   (:require [dk.ative.docjure.spreadsheet :as dc]
-            [bg-to-briljant.arguments     :refer [validate-args]])
+            [bg-to-briljant.arguments     :refer [validate-args]]
+            [bg-to-briljant.utilities     :as util])
   (:gen-class))
 
 (def debetkonto 1933)
@@ -52,16 +53,16 @@
            #"80\d\d\d"            :faktura
            #"(?i)(sits|sittning)" :sittning-extern
            #""                    :okategoriserat)))
-(def kategori->avdelning
+(def kategori->underprojekt
   {:sittningspaket  201
    :spexpay         501
-   :faktura         ""   ; Fakturor har ingen avdelning.
+   :faktura         ""   ; Fakturor har inget självklart underprojekt.
    :sittning-extern 201
    :okategoriserat  0})
 
-(defn associera-avdelning
+(defn associera-underprojekt
   [transaktion]
-  (assoc transaktion :avdelning (kategori->avdelning (:kategori transaktion))))
+  (assoc transaktion :underprojekt (kategori->underprojekt (:kategori transaktion))))
 
 (defn dokument->transaktioner
   "Extraherar alla transaktioner ur ett excelark från
@@ -78,14 +79,14 @@
      (map kategorisera)
      (map associera-kreditkonto)
      (map associera-kreditunderkonto)
-     (map associera-avdelning)))
+     (map associera-underprojekt)))
 
 (defn transaktion->csv-string
   "Tar ett datum och en transaktion och returnerar en bit text i
   CSV-format som representerar transaktionen i Briljant-format."
-  [datum {:keys [kreditkonto kreditunderkonto avdelning belopp betalningsreferens]}]
-  (str ";" datum ";" kreditkonto ";" kreditunderkonto ";" avdelning ";;" projekt ";;"
-       (- belopp) ";" betalningsreferens ";;"))
+  [datum {:keys [kreditkonto kreditunderkonto underprojekt belopp betalningsreferens avsändare]}]
+  (str ";" datum ";" kreditkonto ";" kreditunderkonto ";;;" projekt","underprojekt  ";;"
+       (- belopp) ";" betalningsreferens " " (util/capitalize-words avsändare) ";;"))
 
 
 (defn -main
