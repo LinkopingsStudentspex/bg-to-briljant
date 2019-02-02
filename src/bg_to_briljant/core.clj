@@ -31,7 +31,7 @@
    :spexpay         3152
    :faktura         1510
    :sittning-extern 3169
-   :okategoriserat  0}) ; Vi sätter noll här för det bör ersättas. Kan vara fel val.
+   :okategoriserat  9999})
 
 (defn associera-kreditkonto
   [transaktion]
@@ -56,9 +56,9 @@
 (def kategori->underprojekt
   {:sittningspaket  201
    :spexpay         501
-   :faktura         ""   ; Fakturor har inget självklart underprojekt.
+   :faktura         nil   ; Fakturor har inget självklart underprojekt.
    :sittning-extern 201
-   :okategoriserat  0})
+   :okategoriserat  nil})
 
 (defn associera-underprojekt
   [transaktion]
@@ -85,8 +85,13 @@
   "Tar ett datum och en transaktion och returnerar en bit text i
   CSV-format som representerar transaktionen i Briljant-format."
   [datum {:keys [kreditkonto kreditunderkonto underprojekt belopp betalningsreferens avsändare]}]
-  (str ";" datum ";" kreditkonto ";" kreditunderkonto ";;;" projekt","underprojekt  ";;"
-       (- belopp) ";" betalningsreferens " " (util/capitalize-words avsändare) ";;"))
+  (str ";" datum
+       ";" kreditkonto
+       ";" kreditunderkonto
+       ";;;" (if underprojekt (str projekt","underprojekt) "")
+       ";;" (- belopp)
+       ";" betalningsreferens " " (util/capitalize-words avsändare)
+       ";;"))
 
 
 (defn -main
