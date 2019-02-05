@@ -101,8 +101,10 @@
       (do (println exit-message)
           (System/exit (if ok? 0 1)))
       (for [dokument (map dc/load-workbook arguments)]
-        (let [datum (dokument->datum dokument)]
-          (spit (str "out/" datum ".csv")
+        (let [datum   (dokument->datum dokument)
+              outpath (str "out/" datum ".csv")]
+          (println "Writing to " outpath)
+          (spit outpath
                 (str headers
                      (total-csv-rad datum (dokument->total dokument))
                      "\n"
