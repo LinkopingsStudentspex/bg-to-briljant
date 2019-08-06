@@ -7,3 +7,8 @@
   (->> (string/split (str s) #"\b")
        (map string/capitalize)
        string/join))
+
+(defn tprn
+  [arg]
+  (prn arg)
+  arg)
