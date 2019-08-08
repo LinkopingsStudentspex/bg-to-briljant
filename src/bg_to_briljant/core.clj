@@ -4,9 +4,8 @@
             [bg-to-briljant.utilities     :as util])
   (:gen-class))
 
-(def debetkonto 1933)
+(def settings (read-string (slurp "settings.edn")))
 (def headers    "PREL\n1;.U\n")
-(def projekt    2019)
 
 (defn dokument->datum
   [dokument]
@@ -24,18 +23,11 @@
 
 (defn total-csv-rad
   [datum totalbelopp]
-  (str ";" datum ";" debetkonto ";;;;;;" totalbelopp ";BG-inbet. " datum ";;"))
-
-(def kategori->kreditkonto
-  {:sittningspaket  3168
-   :spexpay         3152
-   :faktura         1510
-   :sittning-extern 3169
-   :okategoriserat  9999})
+  (str ";" datum ";" (:debetkonto settings) ";;;;;;" totalbelopp ";BG-inbet. " datum ";;"))
 
 (defn associera-kreditkonto
   [transaktion]
-  (assoc transaktion :kreditkonto (kategori->kreditkonto (:kategori transaktion))))
+  (assoc transaktion :kreditkonto ((:kategori->kreditkonto settings) (:kategori transaktion))))
 
 (defn associera-kreditunderkonto
   [transaktion]
@@ -44,25 +36,16 @@
     transaktion))
 
 (defn kategorisera
-  "Kategorisera transaktionen"
+  "Kategorisera en transaktion att vara i någon av de kotegorier som
+  anges i inställningarna för programmet."
   [transaktion]
   (assoc transaktion :kategori
-         (condp re-find (:betalningsreferens transaktion)
-           #"(?i)sittningspaket"  :sittningspaket
-           #"\d\d\d\d\d\d\d\d"    :spexpay
-           #"80\d\d\d"            :faktura
-           #"(?i)(sits|sittning)" :sittning-extern
-           #""                    :okategoriserat)))
-(def kategori->underprojekt
-  {:sittningspaket  201
-   :spexpay         501
-   :faktura         nil   ; Fakturor har inget självklart underprojekt.
-   :sittning-extern 201
-   :okategoriserat  nil})
+         (or (util/condp-fn util/re-find-safe (:betalningsreferens transaktion) (:meddelande-regex->kategori settings))
+             :okategoriserat)))
 
 (defn associera-underprojekt
   [transaktion]
-  (assoc transaktion :underprojekt (kategori->underprojekt (:kategori transaktion))))
+  (assoc transaktion :underprojekt ((:kategori->underprojekt settings) (:kategori transaktion))))
 
 (defn dokument->transaktioner
   "Extraherar alla transaktioner ur ett excelark från
@@ -88,7 +71,7 @@
   (str ";" datum
        ";" kreditkonto
        ";" kreditunderkonto
-       ";;;" (if underprojekt (str projekt","underprojekt) "")
+       ";;;" (if underprojekt (str (:projekt settings)","underprojekt) "")
        ";;" (- belopp)
        ";" betalningsreferens " " (util/capitalize-words avsändare)
        ";;"))

@@ -1,0 +1,28 @@
+{;; Projektnumret som allt ska bokföras under.
+ :projekt                    2019
+ ;; Det kontonummer som i bokföringen representerar bankkontot med
+ ;; som pengarna faktiskt kommer in på.
+ :debetkonto                 1933
+ ;; Vänsterledet är ett reguljärt uttryck som matchas mot meddelandet
+ ;; i var post i swishrapporten, matchar det reguljära uttrycket får
+ ;; raden kategorin i högerledet associerad med sig.
+ ;;   Anledningen till att vi använder en sekvens istället för en
+ ;; associativ datastruktur är att ordningen spelar roll, tidigare
+ ;; regler kommer alltid användas före om de matchar.
+ :meddelande-regex->kategori [#"(?i)sittningspaket"  :sittningspaket
+                              #"\d\d\d\d\d\d\d\d"    :spexpay
+                              #"90\d\d\d"            :faktura
+                              #"(?i)(sits|sittning)" :sittning-extern]
+  ;; Vilket kreditkonto bokförs var kategori under?
+ :kategori->kreditkonto      {:sittningspaket  3168
+                              :spexpay         3152
+                              :faktura         1510
+                              :sittning-extern 3169
+                              :okategoriserat  9999}
+ ;; Vilket underprojekt bör var kategori sorteras in under?
+ :kategori->underprojekt     {:sittningspaket  204
+                              :spexpay         504
+                              :faktura         nil   ; Fakturor har inget självklart underprojekt.
+                              :sittning-extern 204
+                              :okategoriserat  nil}
+ }
