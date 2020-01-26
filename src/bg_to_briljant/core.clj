@@ -81,25 +81,25 @@
   "Tar en lista på sökvägar till dokument, läser in dom och spottar ur
   sig briljant-formatterade csv-filer."
   [sökvägar]
-  (for [dokument (map dc/load-workbook sökvägar)
-        :let [datum   (dokument->datum dokument)
-              outpath (str "out/" datum ".csv")])
-    (spit outpath
-          (str headers
-               (total-csv-rad datum (dokument->total dokument))
-               "\n"
-               (->> dokument
-                    dokument->transaktioner
-                    (map (partial transaktion->csv-string datum))
-                    (clojure.string/join "\n"))
-               "\n"))
-    outpath))
+  (for [dokument (map dc/load-workbook sökvägar)]
+    (let [datum   (dokument->datum dokument)
+          outpath (str "out/" datum ".csv")]
+      (spit outpath
+            (str headers
+                 (total-csv-rad datum (dokument->total dokument))
+                 "\n"
+                 (->> dokument
+                      dokument->transaktioner
+                      (map (partial transaktion->csv-string datum))
+                      (clojure.string/join "\n"))
+                 "\n"))
+      outpath)))
 
 
 (defn -main
   [& args]
   (let [{:keys [arguments options exit-message ok?]} (validate-args args)]
-    (def settings (read-string (slurp (:settings options))))
+    (def settings (:settings options))
     (if exit-message
       (do (println exit-message)
           (System/exit (if ok? 0 1)))

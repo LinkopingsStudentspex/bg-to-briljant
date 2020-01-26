@@ -1,10 +1,15 @@
 (ns bg-to-briljant.arguments
   (:require [clojure.tools.cli          :as cli]))
 
+(defn read-settings
+  [path]
+  (read-string (slurp path)))
+
 (def cli-options
   [["-h" "--help"]
-   ["-s" "--settings"
-    :default "settings.edn"]])
+   ["-s" "--settings SETTING.EDN-FILE" "Path to the settings file."
+    :parse-fn read-settings
+    :default  "settings.edn"]])
 
 (defn validate-args
   "Validate command line arguments. Either return a map indicating the
