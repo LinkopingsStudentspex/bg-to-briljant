@@ -2,7 +2,9 @@
   (:require [clojure.tools.cli          :as cli]))
 
 (def cli-options
-  [["-h" "--help"]])
+  [["-h" "--help"]
+   ["-s" "--settings"
+    :default "settings.edn"]])
 
 (defn validate-args
   "Validate command line arguments. Either return a map indicating the

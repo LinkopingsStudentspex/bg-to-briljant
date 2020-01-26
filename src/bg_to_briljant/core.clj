@@ -4,8 +4,8 @@
             [bg-to-briljant.utilities     :as util])
   (:gen-class))
 
-(def settings (read-string (slurp "settings.edn")))
-(def headers    "PREL\n1;.U\n")
+(def settings nil)
+(def headers  "PREL\n1;.U\n")
 
 (defn dokument->datum
   [dokument]
@@ -77,22 +77,36 @@
        ";;"))
 
 
+(defn gör-det-viktiga!
+  "Tar en lista på sökvägar till dokument, läser in dom och spottar ur
+  sig briljant-formatterade csv-filer."
+  [sökvägar]
+  (for [dokument (map dc/load-workbook sökvägar)
+        :let [datum   (dokument->datum dokument)
+              outpath (str "out/" datum ".csv")])
+    (spit outpath
+          (str headers
+               (total-csv-rad datum (dokument->total dokument))
+               "\n"
+               (->> dokument
+                    dokument->transaktioner
+                    (map (partial transaktion->csv-string datum))
+                    (clojure.string/join "\n"))
+               "\n"))
+    outpath))
+
+
 (defn -main
   [& args]
   (let [{:keys [arguments options exit-message ok?]} (validate-args args)]
+    (def settings (read-string (slurp (:settings options))))
     (if exit-message
       (do (println exit-message)
           (System/exit (if ok? 0 1)))
-      (for [dokument (map dc/load-workbook arguments)]
-        (let [datum   (dokument->datum dokument)
-              outpath (str "out/" datum ".csv")]
-          (println "Writing to " outpath)
-          (spit outpath
-                (str headers
-                     (total-csv-rad datum (dokument->total dokument))
-                     "\n"
-                     (->> dokument
-                          dokument->transaktioner
-                          (map (partial transaktion->csv-string datum))
-                          (clojure.string/join "\n"))
-                     "\n")))))))
+      (do (println "Använder följande inställningar:")
+          (clojure.pprint/pprint settings)
+          (print "Processerar följande dokument: ")
+          (doall (map print (interpose " " arguments)))
+          (println)
+          (print "Skriver till ")
+          (doall (map print (interpose " " (gör-det-viktiga! arguments))))))))
