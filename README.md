@@ -30,3 +30,17 @@ För att skapa ett produktionsbygge, en release, så kör:
 
 Detta kommer skapa ett fristående javaprogram i `target/uberjar` som
 går att köra enligt instruktionerna i [##Användning].
+
+
+# Användarguide
+
+Det här programmet tar en eller flera bankgirorapport(er) från
+Swedbank som argument och spottar ur sig CSV-filer för
+bokföringsprogrammet att läsa in. Till exempel kan man köra programmet
+likt:
+
+```
+java -jar in/Bg5606-2060_Insättningsuppgifter_20191018.xlsx
+```
+
+Då kommer programmet att spotta ur sig en CSV-fil kallad `2019-10-18.csv`.

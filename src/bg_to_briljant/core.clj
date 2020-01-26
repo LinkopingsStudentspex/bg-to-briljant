@@ -83,7 +83,7 @@
   [sökvägar]
   (for [dokument (map dc/load-workbook sökvägar)]
     (let [datum   (dokument->datum dokument)
-          outpath (str "out/" datum ".csv")]
+          outpath (str datum ".csv")]
       (spit outpath
             (str headers
                  (total-csv-rad datum (dokument->total dokument))
@@ -95,7 +95,6 @@
                  "\n"))
       outpath)))
 
-
 (defn -main
   [& args]
   (let [{:keys [arguments options exit-message ok?]} (validate-args args)]
@@ -105,8 +104,10 @@
           (System/exit (if ok? 0 1)))
       (do (println "Använder följande inställningar:")
           (clojure.pprint/pprint settings)
+          (println)
           (print "Processerar följande dokument: ")
           (doall (map print (interpose " " arguments)))
           (println)
           (print "Skriver till ")
-          (doall (map print (interpose " " (gör-det-viktiga! arguments))))))))
+          (doall (map print (interpose " " (gör-det-viktiga! arguments))))
+          (println)))))
