@@ -42,7 +42,7 @@ Programmet kräver att Java finns installerat på datorn och körs
 vanligen via en terminal. Till exempel kan man köra programmet likt:
 
 ```
-java -jar in/Bg5606-2060_Insättningsuppgifter_20191018.xlsx
+java -jar <sökvag till bg-to-briljant-x.x.x-standalone.jar> <sökväg till bankgirorapport typ in/Bg5606-2060_Insättningsuppgifter_20191018.xlsx>
 ```
 
 Då kommer programmet att spotta ur sig en CSV-fil kallad
@@ -54,5 +54,5 @@ ange en annan inställningsfil kan du göra det med flaggan
 `--settings, t.ex:
 
 ```
-java -jar --settings /en/annan/inställningsfil.edn in/Bg5606-2060_Insättningsuppgifter_20191018.xlsx
+java -jar <sökväg till bg-to-briljant-1.0.0-standalone.jar> --settings /en/annan/inställningsfil.edn in/Bg5606-2060_Insättningsuppgifter_20191018.xlsx
 ```
